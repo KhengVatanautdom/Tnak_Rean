@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Management</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input, button { padding: 8px; margin: 5px; width: 250px; }
+    .form-group { margin-bottom: 15px; }
+    .btn { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+    .btn:hover { background-color: #45a049; }
+    .danger { background-color: #f44336; }
+    .danger:hover { background-color: #da190b; }
+    .search-group, .delete-group { margin-top: 30px; }
+    
+  </style>
+</head>
+<body>
+
+  <h2>Add Student</h2>
+  <div class="form-group">
+    <input type="text" id="name" placeholder="Name">
+  </div>
+  <div class="form-group">
+    <input type="text" id="sid" placeholder="Student ID (SID)">
+  </div>
+  <div class="form-group">
+    <input type="text" id="email" placeholder="Email">
+  </div>
+  <div class="form-group">
+    <input type="text" id="bd" placeholder="Birthdate (yyyy-mm-dd)">
+  </div>
+  <button class="btn" onclick="addStudent()">Add Student</button>
+
+  <div class="search-group">
+    <h2>Search Student by SID</h2>
+    <input type="text" id="searchSid" placeholder="Enter SID to search">
+    <button class="btn" onclick="searchStudent()">Search</button>
+    <div id="searchResult"></div>
+  </div>
+
+  <div class="delete-group">
+    <h2>Delete Student by SID</h2>
+    <input type="text" id="deleteSid" placeholder="Enter SID to delete">
+    <button class="btn danger" onclick="deleteStudent()">Delete</button>
+    <div id="deleteResult"></div>
+  </div>
+
+  <script>
+    const apiUrl = 'http://localhost:3000/students';
+
+    async function addStudent() {
+      const student = {
+        name: document.getElementById('name').value,
+        SID: document.getElementById('sid').value,
+        email: document.getElementById('email').value,
+        bd: document.getElementById('bd').value,
+      };
+
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(student)
+      });
+      const data = await res.json();
+      alert('Student added: ' + JSON.stringify(data));
+    }
+
+    async function searchStudent() {
+      const sid = document.getElementById('searchSid').value;
+      const res = await fetch(`${apiUrl}/sid/${sid}`);
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('searchResult').innerText = JSON.stringify(data, null, 2);
+      } else {
+        document.getElementById('searchResult').innerText = 'Student not found!';
+      }
+    }
+
+    async function deleteStudent() {
+      const sid = document.getElementById('deleteSid').value;
+      const res = await fetch(`${apiUrl}/sid/${sid}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById('deleteResult').innerText = data.message;
+      } else {
+        document.getElementById('deleteResult').innerText = data.error;
+      }
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Result Management</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      padding: 30px;
+      color: #333;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #894caf;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px #ccc;
+      margin-bottom: 30px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input[type="text"], input[type="number"] {
+      width: 95%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      background-color: #aa4caf;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #cf83ff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #fff;
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #af5dc2;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Result Management</h1>
+
+  <div class="container">
+    <!-- Add Result -->
+    <h2>Add Result</h2>
+    <form id="addResultForm">
+      <label>Student ID:</label>
+      <input type="text" id="studentId">
+      <label>Course ID:</label>
+      <input type="text" id="courseId">
+      <label>Score:</label>
+      <input type="number" id="score">
+      <label>Grade:</label>
+      <input type="text" id="grade">
+      <button type="submit">Add Result</button>
+    </form>
+  </div>
+
+  <div class="container">
+    <!-- Get All Results -->
+    <h2>All Results</h2>
+    <button onclick="getAllResults()">Fetch All Results</button>
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Student ID</th>
+          <th>Course ID</th>
+          <th>Score</th>
+          <th>Grade</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="container">
+    <!-- Search Result by Student ID -->
+    <h2>Search Results by Student ID</h2>
+    <input type="text" id="searchStudentId" placeholder="Enter Student ID">
+    <button onclick="searchByStudentId()">Search</button>
+    <table id="studentResultsTable">
+      <thead>
+        <tr>
+          <th>Course ID</th>
+          <th>Score</th>
+          <th>Grade</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="container">
+    <!-- Update Result -->
+    <h2>Update Result by Course ID</h2>
+    <form id="updateResultForm">
+      <label>Course ID:</label>
+      <input type="text" id="updateCourseId">
+      <label>New Score:</label>
+      <input type="number" id="updateScore">
+      <label>New Grade:</label>
+      <input type="text" id="updateGrade">
+      <button type="submit">Update Result</button>
+    </form>
+  </div>
+
+  <div class="container">
+    <!-- Delete Result -->
+    <h2>Delete Result</h2>
+    <label>Student ID:</label>
+    <input type="text" id="deleteStudentId">
+    <label>Course ID:</label>
+    <input type="text" id="deleteCourseId">
+    <button onclick="deleteResult()">Delete Result</button>
+  </div>
+
+  <script>
+    const apiUrl = 'http://localhost:3000';
+
+    // Add Result
+    document.getElementById('addResultForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        studentId: document.getElementById('studentId').value,
+        courseId: document.getElementById('courseId').value,
+        score: document.getElementById('score').value,
+        grade: document.getElementById('grade').value,
+      };
+      const res = await fetch(`${apiUrl}/results`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        alert('Result added!');
+        document.getElementById('addResultForm').reset();
+        getAllResults();
+      } else {
+        alert('Error adding result');
+      }
+    });
+
+    // Get All Results
+    async function getAllResults() {
+      const res = await fetch(`${apiUrl}/results`);
+      const results = await res.json();
+      const tbody = document.getElementById('resultsTable').querySelector('tbody');
+      tbody.innerHTML = '';
+      results.forEach(result => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${result.studentId}</td><td>${result.courseId}</td><td>${result.score}</td><td>${result.grade}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Search by Student ID
+    async function searchByStudentId() {
+      const studentId = document.getElementById('searchStudentId').value;
+      const res = await fetch(`${apiUrl}/results/student/${studentId}`);
+      const results = await res.json();
+      const tbody = document.getElementById('studentResultsTable').querySelector('tbody');
+      tbody.innerHTML = '';
+      results.forEach(result => {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${result.courseId}</td><td>${result.score}</td><td>${result.grade}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    // Update Result
+    document.getElementById('updateResultForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const courseId = document.getElementById('updateCourseId').value;
+      const data = {
+        score: document.getElementById('updateScore').value,
+        grade: document.getElementById('updateGrade').value,
+      };
+      const res = await fetch(`${apiUrl}/results/course/${courseId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        alert('Result updated!');
+        document.getElementById('updateResultForm').reset();
+        getAllResults();
+      } else {
+        alert('Error updating result');
+      }
+    });
+
+    // Delete Result
+    async function deleteResult() {
+      const studentId = document.getElementById('deleteStudentId').value;
+      const courseId = document.getElementById('deleteCourseId').value;
+      const res = await fetch(`${apiUrl}/results/${studentId}/${courseId}`, {
+        method: 'DELETE'
+      });
+      const message = await res.json();
+      alert(message.message);
+      getAllResults();
+    }
+
+    // Fetch all results initially
+    window.onload = getAllResults;
+  </script>
+
+</body>
+</html>

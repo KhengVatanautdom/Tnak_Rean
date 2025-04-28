@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Course Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #4a7efc;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background-color: #3b6be0;
+    }
+    .result {
+      margin-top: 10px;
+      font-weight: bold;
+      color: green;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #4a7efc;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Course Management</h1>
+
+<!-- Add Course -->
+<div class="container">
+  <h2>Add Course</h2>
+  <form id="addCourseForm">
+    <input type="text" id="addCourseID" placeholder="CourseID" required>
+    <input type="text" id="addTitle" placeholder="Title" required>
+    <input type="text" id="addDescription" placeholder="Description" required>
+    <input type="number" id="addCredits" placeholder="Credits" required>
+    <button type="submit">Add Course</button>
+  </form>
+</div>
+
+<!-- Search Course -->
+<div class="container">
+  <h2>Search Course</h2>
+  <input type="text" id="searchCourseID" placeholder="Enter CourseID" required>
+  <button onclick="searchCourse()">Search</button>
+  <div id="searchResult" class="result"></div>
+</div>
+
+<!-- Delete Course -->
+<div class="container">
+  <h2>Delete Course</h2>
+  <input type="text" id="deleteCourseID" placeholder="Enter CourseID to Delete" required>
+  <button onclick="deleteCourse()">Delete</button>
+  <div id="deleteResult" class="result"></div>
+</div>
+
+<!-- Update Course -->
+<div class="container">
+  <h2>Update Course</h2>
+  <form id="updateCourseForm">
+    <input type="text" id="updateCourseID" placeholder="CourseID to Update" required>
+    <input type="text" id="updateTitle" placeholder="New Title">
+    <input type="text" id="updateDescription" placeholder="New Description">
+    <input type="number" id="updateCredits" placeholder="New Credits">
+    <button type="submit">Update Course</button>
+  </form>
+</div>
+
+<!-- Show All Courses -->
+<div class="container">
+  <h2>All Courses</h2>
+  <button onclick="fetchCourses()">Load Courses</button>
+  <table id="coursesTable">
+    <thead>
+      <tr>
+        <th>CourseID</th>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Credits</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- courses will be shown here -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+const apiUrl = 'http://localhost:3000/courses';
+
+// Add Course
+document.getElementById('addCourseForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const course = {
+    courseID: document.getElementById('addCourseID').value,
+    title: document.getElementById('addTitle').value,
+    description: document.getElementById('addDescription').value,
+    credits: parseInt(document.getElementById('addCredits').value)
+  };
+  const res = await fetch(apiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(course)
+  });
+  const data = await res.json();
+  alert('Course Added: ' + JSON.stringify(data));
+  document.getElementById('addCourseForm').reset(); 
+});
+
+// Search Course
+async function searchCourse() {
+  const courseID = document.getElementById('searchCourseID').value;
+  const res = await fetch(`${apiUrl}/CourseID/${courseID}`);
+  if (res.ok) {
+    const course = await res.json();
+    document.getElementById('searchResult').innerText = 
+      `Title: ${course.title}, Description: ${course.description}, Credits: ${course.credits}`;
+    document.getElementById('searchCourseID').value = '';
+  } else {
+    document.getElementById('searchResult').innerText = 'Course not found!';
+    document.getElementById('searchCourseID').value = '';
+  }
+}
+
+// Delete Course
+async function deleteCourse() {
+  const courseID = document.getElementById('deleteCourseID').value;
+  const res = await fetch(`${apiUrl}/CourseID/${courseID}`, { method: 'DELETE' });
+  const data = await res.json();
+  document.getElementById('deleteResult').innerText = data.message || data.error;
+  document.getElementById('deleteCourseID').value = '';
+}
+
+// Update Course
+document.getElementById('updateCourseForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const courseID = document.getElementById('updateCourseID').value;
+  const updatedData = {
+    title: document.getElementById('updateTitle').value,
+    description: document.getElementById('updateDescription').value,
+    credits: parseInt(document.getElementById('updateCredits').value)
+  };
+  const res = await fetch(`${apiUrl}/CourseID/${courseID}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updatedData)
+  });
+  const data = await res.json();
+  alert('Course Updated: ' + JSON.stringify(data));
+  document.getElementById('updateCourseForm').reset();
+});
+
+// Fetch and Display All Courses
+async function fetchCourses() {
+  const res = await fetch(apiUrl);
+  const courses = await res.json();
+  
+  const tableBody = document.getElementById('coursesTable').querySelector('tbody');
+  tableBody.innerHTML = '';
+
+  courses.forEach(course => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${course.courseID}</td>
+      <td>${course.title}</td>
+      <td>${course.description}</td>
+      <td>${course.credits}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+</script>
+
+</body>
+</html>

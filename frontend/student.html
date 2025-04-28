@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4a7efc;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #3b6be0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        .result {
+            margin-top: 10px;
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Student Management</h1>
+
+<!-- Add Student -->
+<div class="container">
+    <h2>Add Student</h2>
+    <form id="addStudentForm">
+        <input type="text" id="addName" placeholder="Name" required>
+        <input type="text" id="addSID" placeholder="SID" required>
+        <input type="email" id="addEmail" placeholder="Email" required>
+        <input type="text" id="addBd" placeholder="Birthday (YYYY-MM-DD)" required>
+        <button type="submit">Add Student</button>
+    </form>
+</div>
+
+<!-- Search Student -->
+<div class="container">
+    <h2>Search Student</h2>
+    <input type="text" id="searchSID" placeholder="Enter SID" required>
+    <button onclick="searchStudent()">Search</button>
+    <div id="searchResult" class="result"></div>
+</div>
+
+<!-- Delete Student -->
+<div class="container">
+    <h2>Delete Student</h2>
+    <input type="text" id="deleteSID" placeholder="Enter SID to Delete" required>
+    <button onclick="deleteStudent()">Delete</button>
+    <div id="deleteResult" class="result"></div>
+</div>
+
+<!-- Update Student -->
+<div class="container">
+    <h2>Update Student</h2>
+    <form id="updateStudentForm">
+        <input type="text" id="updateSID" placeholder="SID to Update" required>
+        <input type="text" id="updateName" placeholder="New Name">
+        <input type="email" id="updateEmail" placeholder="New Email">
+        <input type="text" id="updateBd" placeholder="New Birthday (YYYY-MM-DD)">
+        <button type="submit">Update Student</button>
+    </form>
+</div>
+
+<!-- Show All Students -->
+<div class="container">
+    <h2>All Students</h2>
+    <button onclick="loadStudents()">Load Students</button>
+    <table id="studentsTable">
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>SID</th>
+                <th>Email</th>
+                <th>BD (Birthday)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Student list will appear here -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const apiUrl = 'http://localhost:3000/students';
+
+    // Add Student
+    document.getElementById('addStudentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const student = {
+            name: document.getElementById('addName').value,
+            SID: document.getElementById('addSID').value,
+            email: document.getElementById('addEmail').value,
+            bd: document.getElementById('addBd').value
+        };
+        const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(student)
+        });
+        const data = await res.json();
+        alert('Student Added: ' + JSON.stringify(data));
+        document.getElementById('addStudentForm').reset();
+        loadStudents(); // Refresh table after add
+    });
+
+    // Search Student
+    async function searchStudent() {
+        const sidInput = document.getElementById('searchSID');
+        const sid = sidInput.value;
+        const res = await fetch(`${apiUrl}/sid/${sid}`);
+        if (res.ok) {
+            const student = await res.json();
+            document.getElementById('searchResult').innerText = 
+                `Name: ${student.name}, Email: ${student.email}, Birthday: ${student.bd}`;
+        } else {
+            document.getElementById('searchResult').innerText = 'Student not found!';
+        }
+        sidInput.value = '';
+    }
+
+    // Delete Student
+    async function deleteStudent() {
+        const deleteInput = document.getElementById('deleteSID');
+        const sid = deleteInput.value;
+        const res = await fetch(`${apiUrl}/sid/${sid}`, { method: 'DELETE' });
+        const data = await res.json();
+        document.getElementById('deleteResult').innerText = data.message || data.error;
+        deleteInput.value = '';
+        loadStudents(); // Refresh table after delete
+    }
+
+    // Update Student
+    document.getElementById('updateStudentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const sid = document.getElementById('updateSID').value;
+        const student = {
+            name: document.getElementById('updateName').value,
+            email: document.getElementById('updateEmail').value,
+            bd: document.getElementById('updateBd').value
+        };
+        const res = await fetch(`${apiUrl}/sid/${sid}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(student)
+        });
+        const data = await res.json();
+        alert('Student Updated: ' + JSON.stringify(data));
+        document.getElementById('updateStudentForm').reset();
+        loadStudents(); // Refresh table after update
+    });
+
+    // Load All Students
+    async function loadStudents() {
+        const res = await fetch(apiUrl);
+        const students = await res.json();
+
+        const tableBody = document.getElementById('studentsTable').querySelector('tbody');
+        tableBody.innerHTML = ''; // Clear previous content
+
+        students.forEach(student => {
+            const row = `
+                <tr>
+                    <td>${student.name}</td>
+                    <td>${student.SID}</td>
+                    <td>${student.email}</td>
+                    <td>${student.bd}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    // Auto-load students when page opens
+    window.onload = loadStudents;
+</script>
+
+</body>
+</html>

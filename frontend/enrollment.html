@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enrollment Management</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      padding: 30px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #894caf;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px #ccc;
+      margin-bottom: 30px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 95%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-right: 10px;
+      background-color: #aa4caf;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #cf83ff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #fff;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #af5dc2;
+      color: white;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Enrollment Management System</h1>
+
+<div class="container">
+  <h2>Add Enrollment</h2>
+  <label for="studentId">Student ID:</label>
+  <input type="text" id="studentId" placeholder="Enter Student ID">
+
+  <label for="courseId">Course ID:</label>
+  <input type="text" id="courseId" placeholder="Enter Course ID">
+
+  <button onclick="addEnrollment()">Add Enrollment</button>
+</div>
+
+<div class="container">
+  <h2>Search Enrollment</h2>
+  <label for="searchStudentId">Student ID:</label>
+  <input type="text" id="searchStudentId" placeholder="Enter Student ID to search">
+  <button onclick="searchEnrollment()">Search</button>
+
+  <div id="searchResults"></div>
+</div>
+
+<div class="container">
+  <h2>Update Enrollment by CourseID</h2>
+  <label for="updateCourseId">Course ID:</label>
+  <input type="text" id="updateCourseId" placeholder="Enter Course ID to update">
+
+  <label for="newStudentId">New Student ID:</label>
+  <input type="text" id="newStudentId" placeholder="Enter New Student ID">
+
+  <button onclick="updateEnrollment()">Update Enrollment</button>
+</div>
+
+<div class="container">
+  <h2>Delete Enrollment by CourseID</h2>
+  <label for="deleteCourseId">Course ID:</label>
+  <input type="text" id="deleteCourseId" placeholder="Enter Course ID to delete">
+
+  <button onclick="deleteEnrollment()">Delete Enrollment</button>
+</div>
+
+<div class="container"> <!-- Added new container -->
+  <h2>All Enrollments</h2>
+  <div id="allEnrollments"></div>
+</div>
+
+<script>
+  const apiUrl = 'http://localhost:3000/enrollments';
+
+  async function addEnrollment() {
+    const studentId = document.getElementById('studentId').value;
+    const courseId = document.getElementById('courseId').value;
+    
+    if (!studentId || !courseId) {
+      alert('Please fill both Student ID and Course ID.');
+      return;
+    }
+
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId, courseId })
+    });
+
+    const data = await res.json();
+    alert('Enrollment added!');
+    console.log(data);
+
+    document.getElementById('studentId').value = '';
+    document.getElementById('courseId').value = '';
+
+    loadAllEnrollments(); // <-- added
+  }
+
+  async function searchEnrollment() {
+    const studentId = document.getElementById('searchStudentId').value.trim();
+    if (!studentId) {
+      alert('Please enter a Student ID to search.');
+      return;
+    }
+
+    const res = await fetch(`${apiUrl}/student/${studentId}`);
+    const data = await res.json();
+
+    if (data.length === 0) {
+      document.getElementById('searchResults').innerHTML = '<p>No enrollments found!</p>';
+      return;
+    }
+
+    let html = `
+      <table>
+        <tr>
+          <th>Student ID</th>
+          <th>Enrolled Courses</th>
+        </tr>
+        <tr>
+          <td>${studentId}</td>
+          <td>
+            <ul>
+    `;
+
+    data.forEach(enrollment => {
+      html += `<li>📚 ${enrollment.courseId} (Date: ${new Date(enrollment.enrollmentDate).toLocaleDateString()})</li>`;
+    });
+
+    html += `
+            </ul>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    document.getElementById('searchResults').innerHTML = html;
+  }
+
+  async function updateEnrollment() {
+    const courseId = document.getElementById('updateCourseId').value;
+    const newStudentId = document.getElementById('newStudentId').value;
+
+    if (!courseId || !newStudentId) {
+      alert('Please fill both fields.');
+      return;
+    }
+
+    const res = await fetch(`${apiUrl}/course/${courseId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId: newStudentId })
+    });
+
+    const data = await res.json();
+    alert('Enrollment updated!');
+    console.log(data);
+
+    document.getElementById('updateCourseId').value = '';
+    document.getElementById('newStudentId').value = '';
+
+    loadAllEnrollments(); // <-- added
+  }
+
+  async function deleteEnrollment() {
+    const courseId = document.getElementById('deleteCourseId').value;
+
+    if (!courseId) {
+      alert('Please enter Course ID.');
+      return;
+    }
+
+    const res = await fetch(`${apiUrl}/course/${courseId}`, {
+      method: 'DELETE'
+    });
+
+    const data = await res.json();
+    alert('Enrollment deleted!');
+    console.log(data);
+
+    document.getElementById('deleteCourseId').value = '';
+
+    loadAllEnrollments(); // <-- added
+  }
+
+  async function loadAllEnrollments() { // <-- added
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+
+    if (data.length === 0) {
+      document.getElementById('allEnrollments').innerHTML = '<p>No enrollments available.</p>';
+      return;
+    }
+
+    const grouped = {};
+    data.forEach(item => {
+      if (!grouped[item.studentId]) grouped[item.studentId] = [];
+      grouped[item.studentId].push(item.courseId);
+    });
+
+    let html = '<table><tr><th>Student ID</th><th>Courses</th></tr>';
+    for (const studentId in grouped) {
+      html += `<tr><td>${studentId}</td><td>${grouped[studentId].join(', ')}</td></tr>`;
+    }
+    html += '</table>';
+
+    document.getElementById('allEnrollments').innerHTML = html;
+  }
+
+  loadAllEnrollments(); // <-- call it when page loads
+
+</script>
+
+</body>
+</html>
