@@ -17,7 +17,7 @@ Starting with powerful administration services like enrollment, course managemen
 - 🏫 Course Management
 - 📝 Student Results and Grading
 - 📊 Admin Dashboard (coming soon)
-- 🎨 Future Creative Tools (similar to Canva — for schools)
+- 🎨 Future Creative Tools (similar to Canvas — for schools)
 
 ---
 
